@@ -435,5 +435,11 @@ Purpose: Returns if opcode ends a conditional statement
 */
 bool endEFICondition(const string &buffer, uint32_t j);
 
+/* 
+Name: displayRaw
+Purpose: appends raw bytes after parsed output
+*/
+void displayRaw(ofstream &fout, const unsigned char *buffer, uint32_t count);
+
 
 #endif

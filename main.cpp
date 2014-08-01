@@ -29,7 +29,7 @@ enum type {EFI, UEFI, UNKNOWN};
 
 
 // Global variables
-HWND fileLocationEdit, typeText;
+HWND fileLocationEdit, typeText, copyrightText;
 string fileLocation, outputFile;
 int errorCode;
 string buffer;
@@ -110,10 +110,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
 	// Create window
 	hwnd = CreateWindow(appName,
-		TEXT("Universal IFR Extractor v0.6 - MOD"),
+		TEXT("Universal IFR Extractor v0.6a-MOD"),
 		WS_SYSMENU | WS_MINIMIZEBOX,
 		0, 0,
-		354, 135,
+		400, 142,
 		NULL,
 		NULL,
 		hInstance,
@@ -156,10 +156,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			HWND moduleLocationText;
 			moduleLocationText = CreateWindowEx(WS_EX_TRANSPARENT,
 				TEXT("static"),
-				TEXT("Module Location"),
+				TEXT("Module Location: "),
 				WS_CHILD | WS_VISIBLE,
 				10, 16,
-				100, 25,
+				116, 25,
 				hwnd,
 				HMENU(NO_ACTION),
 				NULL,
@@ -170,7 +170,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			HWND protocolText;
 			protocolText = CreateWindowEx(WS_EX_TRANSPARENT,
 				TEXT("static"),
-				TEXT("Protocol:"),
+				TEXT("Protocol: "),
 				WS_CHILD | WS_VISIBLE,
 				10, 52,
 				100, 25,
@@ -185,7 +185,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 				TEXT("static"),
 				TEXT(""),
 				WS_CHILD | WS_VISIBLE,
-				55, 50,
+				68, 50,
 				100, 25,
 				hwnd,
 				HMENU(NO_ACTION),
@@ -193,13 +193,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 				NULL);
 
 			// Create copyright text
-			HWND copyrightText;
 			copyrightText = CreateWindowEx(WS_EX_TRANSPARENT,
 				TEXT("static"),
-				TEXT("© 2014 donovan6000"),
+				//TEXT("© 2014 donovan6000"),
+				TEXT("Unofficial MOD"),
 				WS_CHILD | WS_VISIBLE,
-				198, 81,
-				200, 25,
+				260, 82,
+				120, 25,
 				hwnd,
 				HMENU(NO_ACTION),
 				NULL,
@@ -209,8 +209,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			fileLocationEdit = CreateWindow(TEXT("edit"),
 				NULL,
 				WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | WS_EX_CLIENTEDGE,
-				93, 13,
-				200, 17,
+				118, 16,
+				230, 17,
 				hwnd,
 				HMENU(FILE_LOCATION_EDIT_ACTION),
 				NULL,
@@ -230,7 +230,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			browseButton = CreateWindow(TEXT("button"),
 				TEXT(".."),
 				WS_VISIBLE | WS_CHILD,
-				298, 12,
+				350, 14,
 				30, 19,
 				hwnd,
 				HMENU(BROWSE_BUTTON_ACTION),
@@ -243,7 +243,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			extractButton = CreateWindow(TEXT("button"),
 				TEXT("Extract"),
 				WS_VISIBLE | WS_CHILD,
-				248, 45,
+				300, 45,
 				80, 25,
 				hwnd,
 				HMENU(EXTRACT_BUTTON_ACTION),
@@ -394,7 +394,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			// Make static control transparent
 			HDC hdcStatic;
 			hdcStatic = (HDC)wParam;
-			
+						
 			// Check if caller is type text
 			if((HWND)lParam == typeText) {
 			
@@ -404,7 +404,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 					// Set text
 					SetWindowText(typeText, TEXT("Unknown"));
 					
-					// Set colot
+					// Set color
 					SetTextColor(hdcStatic, RGB(255, 0, 0));
 				}
 
@@ -424,10 +424,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 						SetWindowText(typeText, TEXT("UEFI"));
 
 					// Set color
-					SetTextColor(hdcStatic, RGB(0, 255, 0));
+					SetTextColor(hdcStatic, RGB(0, 128, 0));
 				}
 			}
-			
+			// Less harsh bold
+			else if ((HWND)lParam == copyrightText) {
+				SetTextColor(hdcStatic, RGB(208, 164, 132));
+			}
+						
 			// Otherwise
 			else
 			

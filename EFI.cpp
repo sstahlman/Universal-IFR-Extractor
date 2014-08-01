@@ -202,6 +202,7 @@ void generateEFIIFRDump(const string &outputFile, const vector<EFI_IFR_STRING_PA
 	uint8_t numberOfIfs = 0;
 	unsigned char highNibble, lowNibble;
 	ofstream fout(outputFile.c_str());
+	uint8_t skip_post_code = 0; // boolean, when set, instructs not to display code bytes after parsed form
 
 	// Display protocol
 	for(uint8_t i = 0; i < 32; i++)
@@ -1432,17 +1433,38 @@ void generateEFIIFRDump(const string &outputFile, const vector<EFI_IFR_STRING_PA
 				fout << "0x" << hex << uppercase << temp.header.offset << ' ';
 
 				// Display tabs
-				for(uint8_t k = 0; k < numberOfTabs; k++)
-					fout << '\t';
+				//for(uint8_t k = 0; k < numberOfTabs; k++)
+				//	fout << '\t';
 
 				// Display temp
 				//fout << "Variable Store: 0x" << hex << uppercase << temp.varId;
+				/*
 				fout << "Var Store: ";
 				//Display additional information: GUID:Name[]
 				fout << "[0x" << hex << uppercase << setw(4) << setfill('0') << temp.varId << "]";
 				fout << "[" << temp.guid << "]";
 				fout << "[" << dec << setw(3) << temp.size << "]";
 				fout << "[" << temp.name << "]";
+				*/
+				
+				skip_post_code = 1;
+
+				// Display temp
+				fout << hex << setw(2) << setfill('0') << "Variable Store (" << dec << (int)buffer[j+1] << "):";
+				displayRaw(fout, (unsigned char *)&buffer[j], 2);
+
+				// Display additional information: GUID:Name[]
+				fout << "\t\t Name: [ " << temp.name << " ]";
+				displayRaw(fout, (unsigned char *)&buffer[j+22], (short int)(buffer[j+1]-22));
+
+				fout << "\t\t GUID: [ " << temp.guid << " ]";
+				displayRaw(fout, (unsigned char *)&buffer[j+2], 16);
+								
+				fout << "\t\t   ID: [ 0x" << hex << uppercase << setw(4) << setfill('0') << temp.varId << " ]";
+				displayRaw(fout, (unsigned char *)&buffer[j+18], 2);
+				
+				fout << "\t\t Size: [ " << dec << setw(3) << temp.size << " ]";
+				displayRaw(fout, (unsigned char *)&buffer[j+20], 2);
 			}
 
 			// Otherwise check if opcode is EFI_IFR_VARSTORE_SELECT_OP 0x25
@@ -1646,14 +1668,19 @@ void generateEFIIFRDump(const string &outputFile, const vector<EFI_IFR_STRING_PA
 				fout << "NV Access Command:";
 			}
 		
-			// Display code
-			fout << " {";
-			for(int k = 0; k < static_cast<unsigned char>(buffer[j + 1]); k++) {
-				fout << hex << uppercase << setw(2) << setfill('0') << static_cast<unsigned int>(static_cast<unsigned char>(buffer[j + k]));
-				if(k != static_cast<unsigned char>(buffer[j + 1]) - 1)
-					fout << ' ';
+			// Display code 
+			if (skip_post_code) {
+				skip_post_code = 0;
+			} else {
+				fout << " {";
+				for(int k = 0; k < static_cast<unsigned char>(buffer[j + 1]); k++) {
+					fout << hex << uppercase << setw(2) << setfill('0') << static_cast<unsigned int>(static_cast<unsigned char>(buffer[j + k]));
+					if(k != static_cast<unsigned char>(buffer[j + 1]) - 1)
+						fout << ' ';
+				}
+				
+				fout << '}' << endl;
 			}
-			fout << '}' << endl;
 		}
 	
 	// Close file
@@ -1664,4 +1691,15 @@ bool endEFICondition(const string &buffer, uint32_t j) {
 
 	// Return if following opcode isn't a condition
 	return buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_EQ_ID_VAL_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_EQ_ID_ID_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_EQ_ID_LIST_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_EQ_VAR_VAL_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_AND_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_OR_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_NOT_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_TRUE_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_FALSE_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_GT_OP && buffer[j + static_cast<unsigned char>(buffer[j + 1])] != EFI_IFR_GE_OP;
+}
+
+void displayRaw(ofstream &fout, const unsigned char *buffer, uint32_t count) {
+	// Formats raw bytes after parsed data
+	fout << " {";
+	for(uint32_t c = 0; c < count; c++ ) {
+		fout << hex << uppercase << setw(2) << setfill('0') << (int)buffer[c];
+		if (c != (count-1))
+			fout << " ";
+	}
+	fout << "}" << endl;
 }
