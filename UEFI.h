@@ -685,5 +685,11 @@ Purpose: Generates UEFI IFR dump
 */
 void generateUEFIIFRDump(const string &outputFile, const vector<UEFI_IFR_STRING_PACK> &stringPackages, const vector<UEFI_IFR_FORM_SET_PACK> &formSets, const string &buffer, const vector<string> &strings);
 
+/* 
+Name: displayRaw
+Purpose: appends raw bytes after parsed output
+*/
+void displayRawUEFI(ofstream &fout, const unsigned char *buffer, uint32_t count);
+
 
 #endif

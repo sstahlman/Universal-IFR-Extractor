@@ -206,6 +206,7 @@ void generateUEFIIFRDump(const string &outputFile, const vector<UEFI_IFR_STRING_
 	unsigned char highNibble, lowNibble;
 	vector<uint8_t> conditionalStack;
 	ofstream fout(outputFile.c_str());
+	uint8_t skip_post_code = 0; // boolean, when set, instructs not to display code bytes after parsed form
 
 	// Display protocol
 	for(uint8_t i = 0; i < 32; i++)
@@ -1793,12 +1794,31 @@ void generateUEFIIFRDump(const string &outputFile, const vector<UEFI_IFR_STRING_
 				fout << "0x" << hex << uppercase << temp.header.offset << ' ';
 
 				// Display tabs
-				for(uint8_t k = 0; k < numberOfTabs; k++)
-					fout << '\t';
+				//for(uint8_t k = 0; k < numberOfTabs; k++)
+				//	fout << '\t';
 
 				// Display temp
-				fout << "Var Store: 0x" << hex << uppercase << temp.varStoreId << "[" << dec << temp.size << "] (" << temp.name << ')';
+				//fout << "Var Store: 0x" << hex << uppercase << temp.varStoreId << "[" << dec << temp.size << "] (" << temp.name << ')';
 
+				skip_post_code = 1;
+
+				// Display temp
+				fout << hex << setw(2) << setfill('0') << "Variable Store (" << dec << (int)buffer[j+1] << "):";
+				displayRawUEFI(fout, (unsigned char *)&buffer[j], 2);
+
+				// Display additional information: GUID:Name[]
+				fout << "\t\t Name: [ " << temp.name << " ]";
+				displayRawUEFI(fout, (unsigned char *)&buffer[j+22], (short int)(buffer[j+1]-22));
+
+				fout << "\t\t GUID: [ " << temp.guid << " ]";
+				displayRawUEFI(fout, (unsigned char *)&buffer[j+2], 16);
+								
+				fout << "\t\t   ID: [ 0x" << hex << uppercase << setw(4) << setfill('0') << temp.varStoreId << " ]";
+				displayRawUEFI(fout, (unsigned char *)&buffer[j+18], 2);
+				
+				fout << "\t\t Size: [ " << dec << setw(3) << temp.size << " ]";
+				displayRawUEFI(fout, (unsigned char *)&buffer[j+20], 2);
+				
 				// Check if scope
 				if(temp.header.scope) {
 
@@ -4083,15 +4103,30 @@ void generateUEFIIFRDump(const string &outputFile, const vector<UEFI_IFR_STRING_
 			}
 		
 			// Display code
-			fout << " {";
-			for(int k = 0; k < static_cast<unsigned char>(buffer[j + 1] & 0x7F); k++) {
-				fout << hex << uppercase << setw(2) << setfill('0') << static_cast<unsigned int>(static_cast<unsigned char>(buffer[j + k]));
-				if(k != static_cast<unsigned char>(buffer[j + 1] & 0x7F) - 1)
-					fout << ' ';
+			if (skip_post_code) {
+				skip_post_code = 0;
+			} else {
+				fout << " {";
+				for(int k = 0; k < static_cast<unsigned char>(buffer[j + 1] & 0x7F); k++) {
+					fout << hex << uppercase << setw(2) << setfill('0') << static_cast<unsigned int>(static_cast<unsigned char>(buffer[j + k]));
+					if(k != static_cast<unsigned char>(buffer[j + 1] & 0x7F) - 1)
+						fout << ' ';
+				}
+				
+				fout << '}' << endl;
 			}
-			fout << '}' << endl;
 		}
 	
 	// Close file
 	fout.close();
+}
+void displayRawUEFI(ofstream &fout, const unsigned char *buffer, uint32_t count) {
+	// Formats raw bytes after parsed data
+	fout << " {";
+	for(uint32_t c = 0; c < count; c++ ) {
+		fout << hex << uppercase << setw(2) << setfill('0') << (int)buffer[c];
+		if (c != (count-1))
+			fout << " ";
+	}
+	fout << "}" << endl;
 }
